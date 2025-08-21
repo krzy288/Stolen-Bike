@@ -1,0 +1,36 @@
+name: Health Check
+
+on:
+  schedule:
+    # Run health check every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🏗️ Build services
+      run: |
+        docker-compose build
+        
+    - name: 🚀 Start services
+      run: |
+        docker-compose up -d
+        sleep 30
+        
+    - name: 🔍 Health check
+      run: |
+        # Check if services are responding
+        curl -f http://localhost:8001/health || exit 1
+        curl -f http://localhost:8002/health || exit 1
+        echo "✅ All services are healthy"
+        
+    - name: 🧹 Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
