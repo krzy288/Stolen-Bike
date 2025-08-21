@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  scraper-service:
+    build: ./scraper-service
+    ports:
+      - "8001:8000"
+    environment:
+      - STORAGE_SERVICE_URL=http://storage-service:8000
+    depends_on:
+      - storage-service
+    restart: unless-stopped
+
+  storage-service:
+    build: ./storage-service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+volumes:
+  storage_data:
