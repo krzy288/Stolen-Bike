@@ -30,6 +30,7 @@ jobs:
       
     - name: 🔧 Create data directory
       run: |
+        cd mvp
         mkdir -p data
         chmod 755 data
         
@@ -38,6 +39,7 @@ jobs:
     # ========================================
     - name: 🏗️ Build Docker images
       run: |
+        cd mvp
         echo "🔨 Building Docker Compose services..."
         docker-compose build --no-cache --parallel
         
@@ -51,11 +53,13 @@ jobs:
     # ========================================
     - name: 🚀 Start services
       run: |
+        cd mvp
         echo "🚀 Starting services in background..."
         docker-compose up -d
         
     - name: ⏳ Wait for services startup
       run: |
+        cd mvp
         echo "⏳ Waiting for services to initialize..."
         sleep 30
         
@@ -111,6 +115,7 @@ jobs:
     # ========================================
     - name: 📊 Service monitoring
       run: |
+        cd mvp
         echo "📊 Service status and performance:"
         
         echo "=== CONTAINER STATUS ==="
@@ -150,6 +155,7 @@ jobs:
     - name: 🧹 Cleanup
       if: always()
       run: |
+        cd mvp
         echo "🧹 Cleaning up resources..."
         docker-compose down -v
         docker system prune -f --volumes
