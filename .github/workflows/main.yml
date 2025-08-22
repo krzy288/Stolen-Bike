@@ -59,12 +59,12 @@ jobs:
         
         echo "🏷️ Tagging images for ECR..."
         # Tag scraper service
-        docker tag mvp-scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:latest
-        docker tag mvp-scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:${{ github.sha }}
+        docker tag mvp_scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:latest
+        docker tag mvp_scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:${{ github.sha }}
         
         # Tag storage service  
-        docker tag mvp-storage-service:latest $ECR_REGISTRY/stolen-bike-storage:latest
-        docker tag mvp-storage-service:latest $ECR_REGISTRY/stolen-bike-storage:${{ github.sha }}
+        docker tag mvp_storage-service:latest $ECR_REGISTRY/stolen-bike-storage:latest
+        docker tag mvp_storage-service:latest $ECR_REGISTRY/stolen-bike-storage:${{ github.sha }}
         
     - name: 📦 List built images
       run: |
