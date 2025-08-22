@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stolen-bike-config
+  namespace: stolen-bike
+  labels:
+    app: stolen-bike-finder
+data:
+  # Application configuration
+  LOG_LEVEL: "INFO"
+  ENVIRONMENT: "production"
+  
+  # Storage service configuration
+  STORAGE_DATA_PATH: "/app/data"
+  
+  # Scraper service configuration
+  SCRAPER_INTERVAL: "3600"  # 1 hour in seconds
+  MAX_RETRIES: "3"

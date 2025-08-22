@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-data-pvc
+  namespace: stolen-bike
+  labels:
+    app: storage-service
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  # storageClassName: gp2  # Uncomment and adjust based on your cluster's storage class
