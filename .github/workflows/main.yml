@@ -5,14 +5,12 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master ]
-  schedule:
-    # Health check every 6 hours
-    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 env:
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
+  ECR_REGISTRY: 946624007274.dkr.ecr.eu-north-1.amazonaws.com
 
 jobs:
   build-test-and-deploy:
@@ -27,6 +25,17 @@ jobs:
       
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      
+    - name: 🔑 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1
+        
+    - name: 🏷️ Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
       
     - name: Install docker-compose
       run: |
@@ -47,6 +56,15 @@ jobs:
         cd mvp
         echo "🔨 Building Docker Compose services..."
         docker-compose build --no-cache --parallel
+        
+        echo "🏷️ Tagging images for ECR..."
+        # Tag scraper service
+        docker tag mvp-scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:latest
+        docker tag mvp-scraper-service:latest $ECR_REGISTRY/stolen-bike-scraper:${{ github.sha }}
+        
+        # Tag storage service  
+        docker tag mvp-storage-service:latest $ECR_REGISTRY/stolen-bike-storage:latest
+        docker tag mvp-storage-service:latest $ECR_REGISTRY/stolen-bike-storage:${{ github.sha }}
         
     - name: 📦 List built images
       run: |
@@ -139,20 +157,27 @@ jobs:
         docker-compose logs --tail=30 storage-service
         
     # ========================================
-    # 🚀 DEPLOY PHASE (Future: Deploy to your K8s cluster)
+    # 🚀 DEPLOY PHASE - Push to ECR
     # ========================================
-    - name: 🚀 Deployment preparation
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: 🚀 Push images to ECR
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
       run: |
-        echo "🚀 Preparing for deployment to Kubernetes..."
-        echo "✅ Build successful - ready for K8s deployment"
-        echo "📦 Images built and tested successfully"
-        echo "🎯 Next step: Deploy to your EC2 Kubernetes cluster"
+        echo "🚀 Pushing images to Amazon ECR..."
         
-        # In the future, this is where we'll add:
-        # - Push images to registry
-        # - Deploy to your Kubernetes cluster
-        # - Run post-deployment tests
+        echo "📦 Pushing scraper service..."
+        docker push $ECR_REGISTRY/stolen-bike-scraper:latest
+        docker push $ECR_REGISTRY/stolen-bike-scraper:${{ github.sha }}
+        
+        echo "📦 Pushing storage service..."
+        docker push $ECR_REGISTRY/stolen-bike-storage:latest
+        docker push $ECR_REGISTRY/stolen-bike-storage:${{ github.sha }}
+        
+        echo "✅ All images pushed successfully!"
+        echo "🏷️ Images available at:"
+        echo "   - $ECR_REGISTRY/stolen-bike-scraper:latest"
+        echo "   - $ECR_REGISTRY/stolen-bike-scraper:${{ github.sha }}"
+        echo "   - $ECR_REGISTRY/stolen-bike-storage:latest"
+        echo "   - $ECR_REGISTRY/stolen-bike-storage:${{ github.sha }}"
         
     # ========================================
     # 🧹 CLEANUP PHASE
