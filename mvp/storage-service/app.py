@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from typing import List, Dict
 import logging
+import boto3
 
 app = FastAPI(title="Storage Service", version="1.0.0")
 
@@ -169,6 +170,53 @@ async def clear_old_results(keep_days: int = 30):
         }
     except Exception as e:
         logger.error(f"❌ Failed to clean old results: {e}")
+        return {"status": "error", "error": str(e)}
+
+@app.post("/transfer")
+async def transfer_to_s3():
+    """Transfer all result files to S3 bucket"""
+    try:
+        # S3 configuration
+        bucket_name = "stolenbikebucket"
+        
+        # Initialize S3 client
+        s3_client = boto3.client('s3')
+        
+        # Get all JSON files
+        files = [f for f in os.listdir(STORAGE_DIR) if f.endswith('.json')]
+        
+        if not files:
+            return {"status": "completed", "message": "No files to transfer", "count": 0}
+        
+        transferred_count = 0
+        failed_files = []
+        
+        for filename in files:
+            filepath = os.path.join(STORAGE_DIR, filename)
+            
+            try:
+                # Upload to S3 with timestamp prefix
+                timestamp = datetime.now().strftime('%Y/%m/%d')
+                s3_key = f"results/{timestamp}/{filename}"
+                
+                s3_client.upload_file(filepath, bucket_name, s3_key)
+                logger.info(f"📤 Uploaded: {filename}")
+                transferred_count += 1
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to upload {filename}: {e}")
+                failed_files.append(filename)
+        
+        return {
+            "status": "completed",
+            "bucket": bucket_name,
+            "transferred": transferred_count,
+            "failed": len(failed_files),
+            "failed_files": failed_files if failed_files else None
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ S3 transfer failed: {e}")
         return {"status": "error", "error": str(e)}
 
 if __name__ == "__main__":

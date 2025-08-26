@@ -26,6 +26,8 @@ spec:
         env:
         - name: PORT
           value: "8000"
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
         volumeMounts:
         - name: data-volume
           mountPath: /app/data
